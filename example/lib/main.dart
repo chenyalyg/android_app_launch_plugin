@@ -24,7 +24,10 @@ class _MyAppState extends State<MyApp> {
   }
 
   void itemOnPressed(String pkg_name){
-    AndroidAppLaunchPlugin.LaunchApp(pkg_name);
+    Map<String,String> map=new Map();
+    map["test"]="123";
+    map["test1"]="ddddddddddddd";
+    AndroidAppLaunchPlugin.LaunchAppWithExtra(pkg_name,map);
   }
 
   // Platform messages are asynchronous, so we initialize in an async method.
@@ -32,7 +35,10 @@ class _MyAppState extends State<MyApp> {
     List<Widget> apps=new List();
     // Platform messages may fail, so we use a try/catch PlatformException.
     try {
+      //test Init
       AndroidAppLaunchPlugin.Init();
+
+      //test GetApps
       Future<List> out_apps=AndroidAppLaunchPlugin.GetApps();
       out_apps.then((o){
         for(int i=0;i<o.length;i++){
@@ -52,6 +58,12 @@ class _MyAppState extends State<MyApp> {
     } on PlatformException {
       return;
     }
+
+
+    //test GetExtra
+    AndroidAppLaunchPlugin.GetExtra("test").then((o){
+      print("AndroidAppLaunchPlugin.GetExtra:"+o);
+    });
 
   }
 

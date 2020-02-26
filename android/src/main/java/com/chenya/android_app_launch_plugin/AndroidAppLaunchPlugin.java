@@ -22,6 +22,7 @@ import io.flutter.plugin.common.PluginRegistry.Registrar;
 /** AndroidAppLaunchPlugin */
 public class AndroidAppLaunchPlugin implements FlutterPlugin, MethodCallHandler {
   private static Context ctx;
+  private static Intent main_intent;
   private final Object lock_obj=new Object();
   private Map<String,AppInfo> apps=new HashMap<>();
 
@@ -30,6 +31,7 @@ public class AndroidAppLaunchPlugin implements FlutterPlugin, MethodCallHandler 
     final MethodChannel channel = new MethodChannel(flutterPluginBinding.getFlutterEngine().getDartExecutor(), "android_app_launch_plugin");
     channel.setMethodCallHandler(new AndroidAppLaunchPlugin());
     ctx=flutterPluginBinding.getApplicationContext();
+    main_intent= new Intent(Intent.ACTION_MAIN, null);
   }
 
   // This static function is optional and equivalent to onAttachedToEngine. It supports the old
@@ -58,12 +60,16 @@ public class AndroidAppLaunchPlugin implements FlutterPlugin, MethodCallHandler 
       result.success(out);
     }else if(call.method.equals("LaunchApp")){
       String pkg_name=call.argument("pkg_name");
+      Map<String,String> extras=call.argument("extras");
 
-      LaunchApp(pkg_name);
+      LaunchApp(pkg_name,extras);
       result.success(null);
     }else if(call.method.equals("RefreshApps")){
       RefreshApps();
       result.success(null);
+    }else if(call.method.equals("GetExtra")){
+      String name=call.argument("name");
+      result.success(GetExtra(name));
     }
     else {
       result.notImplemented();
@@ -87,10 +93,13 @@ public class AndroidAppLaunchPlugin implements FlutterPlugin, MethodCallHandler 
   }
 
   //启动app
-  private void LaunchApp(String pkg_name){
+  private void LaunchApp(String pkg_name,Map<String,String> extras){
     synchronized(lock_obj) {
       Intent intent = this.apps.get(pkg_name).getIntent();
       if (intent != null) {
+        for(Map.Entry<String, String> entry : extras.entrySet()){
+          intent.putExtra(entry.getKey(),entry.getValue());
+        }
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         ctx.startActivity(intent);
       }
@@ -101,6 +110,7 @@ public class AndroidAppLaunchPlugin implements FlutterPlugin, MethodCallHandler 
     if(ctx==null){
       return;
     }
+
     synchronized(lock_obj){
       Map<String,AppInfo> apps=GetAppList(ctx);
       this.apps.clear();
@@ -118,13 +128,21 @@ public class AndroidAppLaunchPlugin implements FlutterPlugin, MethodCallHandler 
     return out;
   }
 
+  private String GetExtra(String name){
+    String value= main_intent.getStringExtra(name);
+    if(value==null){
+      value="";
+    }
+    return value;
+  }
+
   //缓存app列表
   private Map<String,AppInfo> GetAppList(Context context){
     Map<String,AppInfo> list=new HashMap();
     PackageManager pm = context.getPackageManager();
-    Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
-    mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
-    List<ResolveInfo> activities   = pm.queryIntentActivities(mainIntent, 0);
+
+    main_intent.addCategory(Intent.CATEGORY_LAUNCHER);
+    List<ResolveInfo> activities   = pm.queryIntentActivities(main_intent, 0);
     for(ResolveInfo info : activities){
       String packName = info.activityInfo.packageName;
       if(packName.equals(context.getPackageName())){

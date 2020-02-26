@@ -1,8 +1,7 @@
 name: android_app_launch_plugin
 description: A android app launch plugin.
-version: 0.0.1
-author:
-homepage:
+version: 0.0.2
+homepage: http://github.com/chenyalyg/android_app_launch_plugin.git
 
 environment:
   sdk: ">=2.1.0 <3.0.0"

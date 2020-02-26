@@ -15,8 +15,8 @@ class AndroidAppLaunchPlugin {
 
 
   static Future<void> Init() async {
-    final void out = await _channel.invokeMethod('Init');
-    return out;
+    await _channel.invokeMethod('Init');
+    return null;
   }
 
   static Future<List> GetApps() async {
@@ -38,9 +38,19 @@ class AndroidAppLaunchPlugin {
     return null;
   }
 
-  static Future<void> LaunchApp(String pkg_name) async {
-    _channel.invokeMethod('LaunchApp',{'pkg_name':pkg_name});
+  static Future<void> LaunchAppWithExtra(String pkg_name,Map<String,String> extras) async {
+    _channel.invokeMethod('LaunchApp',{'pkg_name':pkg_name,'extras':extras});
 
     return null;
+  }
+  static Future<void> LaunchApp(String pkg_name) async {
+    _channel.invokeMethod('LaunchApp',{'pkg_name':pkg_name,'extras':new Map<String,String>()});
+
+    return null;
+  }
+
+  static Future<String> GetExtra(String name) async {
+    final String out = await _channel.invokeMethod('GetExtra',{"name":name});
+    return out;
   }
 }
